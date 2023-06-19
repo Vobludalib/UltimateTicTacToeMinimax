@@ -3,7 +3,7 @@
 class Program {
     
     public interface IPlayer {
-        public Move move( Game gamestate );
+        public Move? move( Game gamestate );
     }
 
     public class Move {
@@ -300,7 +300,7 @@ class Program {
         }
 
         public Move? move( Game gamestate ) { //Given a gamestate returns who would win and what the optimal move to make is
-            Move? returnMove = new Move( -1, -1 );
+            Move? returnMove = null;
             minimax( gamestate, 0, out returnMove );
             return returnMove;
         }
@@ -328,27 +328,29 @@ class Program {
         }
     }
 
-    public static void Main() {
-        Game game = new Game();
-        IPlayer player = new MinimaxPlayer(4);
+    // public static void Main() {
+    //     Game game = new Game();
+    //     IPlayer player = new MinimaxPlayer(4);
 
-        while ( game.won == -1 ) { //TO DO: CHECK IF IT PROPERLY CHECKS WIN CONDITIONS
-            if ( game.turn == 1 ) {
-                WriteLine( "Enter your turn in the form: x y" );
-                string[] input = ReadLine()!.Split();
-                int x = int.Parse(input[0]);
-                int y = int.Parse(input[1]);
-                Move move = new Move( x, y );
-                game.move( move );
-                move.print();
-                game.prettyPrint();
-            } else {
-                Move move = player.move( game );
-                game.move( move );
-                move.print();
-                game.prettyPrint();
-            }
-        }
-    }
+    //     while ( game.won == -1 ) { //TO DO: CHECK IF IT PROPERLY CHECKS WIN CONDITIONS
+    //         if ( game.turn == 1 ) {
+    //             WriteLine( "Enter your turn in the form: x y" );
+    //             string[] input = ReadLine()!.Split();
+    //             int x = int.Parse(input[0]);
+    //             int y = int.Parse(input[1]);
+    //             Move move = new Move( x, y );
+    //             game.move( move );
+    //             move.print();
+    //             game.prettyPrint();
+    //         } else {
+    //             Move? move = player.move( game );
+    //             if ( move is not null ) {
+    //                 game.move( move );
+    //                 move.print();
+    //                 game.prettyPrint();
+    //             }
+    //         }
+    //     }
+    // }
 
 }
