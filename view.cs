@@ -9,11 +9,18 @@ using Timeout = GLib.Timeout;
 
 class GameArea : DrawingArea {
 
+    const bool debug = true;
+
     public Game game;
     public IPlayer player;
 
     int areaSize;
     int padding;
+    const int gridEntrySizePercentage = 70;
+    const int innerGridPadding = 10;
+    int individualGridEntryWidth;
+    (int x, int y)[,] topLeftGrid;
+    bool gridFilledOut;
 
     ImageSurface canvas;
     Color red = new Color( 1, 0, 0 ),
@@ -41,15 +48,29 @@ class GameArea : DrawingArea {
 
         game = new Game();
         player = new MinimaxPlayer( 4 ); //TO DO: Make this be based off selection in GUI
+        topLeftGrid = new (int,int)[ 9, 9 ];
+        gridFilledOut = false;
+        individualGridEntryWidth = ( ( areaSize - padding * 2 ) / 3 - innerGridPadding * 2 ) / 3;
     }
 
-    void drawTicTacToeBoard( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, int stroke = 4 ) {
-        System.Console.WriteLine($"Drawing board from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
+    void drawTicTacToeBoard( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, int stroke = 4, bool isSmallBoard = false, int smallBoardX = -1, int smallBoardY = -1 ) {
+        if ( debug ) System.Console.WriteLine($"Drawing board from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
         c.SetSourceColor( black );
         c.LineWidth = stroke;
         
         int boardSizeWithPadding = totalWidth - ( paddingFromTopLeft * 2 );
         int[] divisions = { boardSizeWithPadding / 3 + paddingFromTopLeft, ( boardSizeWithPadding / 3 ) * 2 + paddingFromTopLeft };
+
+        if ( isSmallBoard && !gridFilledOut ) {
+            for ( int x = 0; x < 3; ++x ) {
+                for ( int y = 0; y < 3; ++y ) {
+                    int xDivision = x > 0 ? divisions[ x - 1 ] - paddingFromTopLeft : 0;
+                    int yDivision = y > 0 ? divisions[ y - 1 ] - paddingFromTopLeft : 0;
+                    topLeftGrid[ smallBoardX * 3 + x, smallBoardY * 3 + y ] = (topLeftX + xDivision, topLeftY + yDivision);
+                    if ( debug ) System.Console.WriteLine($"Top left of cell at: {topLeftX + xDivision}, {topLeftY + yDivision}");
+                }
+            }
+        }
 
         for ( int i = 0; i < 2; ++i ) {
             c.MoveTo( topLeftX + divisions[ i ] , paddingFromTopLeft + topLeftY );
@@ -65,25 +86,25 @@ class GameArea : DrawingArea {
     }
 
     void drawCross( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, Color color, int stroke = 2 ) { //TO DO: Figure out how to make colour an optional parameter
-        System.Console.WriteLine($"Drawing cross from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
+        if (debug) System.Console.WriteLine($"Drawing cross from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
         c.SetSourceColor( color );
         c.LineWidth = stroke;
 
         c.MoveTo( topLeftX + paddingFromTopLeft, topLeftY + paddingFromTopLeft );
-        c.LineTo( topLeftX + totalWidth - paddingFromTopLeft, topLeftY + totalWidth - paddingFromTopLeft );
+        c.LineTo( topLeftX + totalWidth + paddingFromTopLeft, topLeftY + totalWidth + paddingFromTopLeft );
         c.Stroke();
 
-        c.MoveTo( topLeftX + totalWidth - paddingFromTopLeft, topLeftY + paddingFromTopLeft );
-        c.LineTo( topLeftX + paddingFromTopLeft, topLeftY + totalWidth - paddingFromTopLeft );
+        c.MoveTo( topLeftX + totalWidth + paddingFromTopLeft, topLeftY + paddingFromTopLeft );
+        c.LineTo( topLeftX + paddingFromTopLeft, topLeftY + totalWidth + paddingFromTopLeft );
         c.Stroke();
     }
 
     void drawCircle( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, Color color, int stroke = 2 ) { //TO DO: Same here
-        System.Console.WriteLine($"Drawing circle from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
+        if (debug) System.Console.WriteLine($"Drawing circle from {topLeftX}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
         c.SetSourceColor( color );
         c.LineWidth = stroke;
 
-        c.Arc( xc: topLeftX + totalWidth / 2, yc: topLeftY + totalWidth / 2, radius: totalWidth / 2 - paddingFromTopLeft, angle1: 0.0, angle2: 2 * Math.PI );
+        c.Arc( xc: topLeftX + paddingFromTopLeft + totalWidth / 2, yc: topLeftY + paddingFromTopLeft + totalWidth / 2, radius: totalWidth / 2, angle1: 0.0, angle2: 2 * Math.PI );
         c.Stroke();
     }
 
@@ -101,18 +122,21 @@ class GameArea : DrawingArea {
         int[] bigBoardDivisions = { padding, ( areaSize - padding * 2 ) / 3 + padding, ( areaSize - padding * 2 ) / 3 * 2 + padding };
         for ( int i = 0; i < 3; ++i ) {
             for ( int j = 0; j < 3; ++j ) {
-                drawTicTacToeBoard( c, bigBoardDivisions[ i ], bigBoardDivisions[ j ], ( areaSize - padding * 2 ) / 3, 10, stroke:2 );
+                drawTicTacToeBoard( c, bigBoardDivisions[ i ], bigBoardDivisions[ j ], ( areaSize - padding * 2 ) / 3, innerGridPadding, stroke:2, isSmallBoard:true, smallBoardX:i, smallBoardY:j );
             }
         }
+        gridFilledOut = true;
 
         //Add displaying of all individual grid entries
         for ( int x = 0; x < 9; ++x ) {
             for ( int y = 0; y < 9; ++y ) {
                 int player = game.bigGrid[ x / 3, y / 3 ].grid[ x % 3, y % 3 ];
+                int entrySize = ( int ) ( individualGridEntryWidth * ( (float) gridEntrySizePercentage / 100 ));
+                int entryPadding = ( individualGridEntryWidth - entrySize ) / 2;
                 if ( player == 1 ) {
-                    drawCircle( c, padding + ( areaSize - padding * 2 ) / 9 * x, padding + ( areaSize - padding * 2 ) / 9 * y, ( areaSize - padding * 2 ) / 9, 10, blue );
+                    drawCircle( c, topLeftGrid[ x, y ].x + innerGridPadding, topLeftGrid[ x, y ].y + innerGridPadding, entrySize, entryPadding, blue );
                 } else if ( player == 2 ) {
-                    drawCross( c, padding + ( areaSize - padding * 2 ) / 9 * x, padding + ( areaSize - padding * 2 ) / 9 * y, ( areaSize - padding * 2 ) / 9, 10, red );
+                    drawCross( c, topLeftGrid[ x, y ].x + innerGridPadding, topLeftGrid[ x, y ].y + innerGridPadding, entrySize, entryPadding, red );
                 }
             }
         }
@@ -130,7 +154,7 @@ class GameArea : DrawingArea {
                     color = red;
                 }
                 c.SetSourceColor( color );
-                c.Rectangle( x: padding + ( areaSize - padding * 2 ) / 3 * x, y: padding + ( areaSize - padding * 2 ) / 3 * y, width: ( areaSize - padding * 2 ) / 3, height: ( areaSize - padding * 2 ) / 3 );
+                c.Rectangle( x: topLeftGrid[ x * 3, y * 3 ].x, y: topLeftGrid[ x * 3, y * 3 ].y, width: ( areaSize - padding * 2 ) / 3, height: ( areaSize - padding * 2 ) / 3 );
                 c.Fill();
             }
         }
@@ -155,7 +179,9 @@ class GameArea : DrawingArea {
 
         foreach ( Move m in game.possibleMoves() ) {
             c.SetSourceColor( transparentHighlight );
-            c.Rectangle( x: padding + ( areaSize - padding * 2 ) / 9 * m.x + 10, y: padding + ( areaSize - padding * 2 ) / 9 * m.y + 10, width: ( areaSize - padding * 2 ) / 9 - 20, height: ( areaSize - padding * 2 ) / 9 - 20 );
+            int rectSize = ( int ) ( individualGridEntryWidth * ( (float) gridEntrySizePercentage / 100 ));
+            int restPadding = ( individualGridEntryWidth - rectSize ) / 2;
+            c.Rectangle( x: topLeftGrid[ m.x, m.y ].x + innerGridPadding + entryPadding, y: topLeftGrid[ m.x, m.y ].y + innerGridPadding + restPadding, width: rectSize, height: rectSize);
             c.Fill();
         }
 
