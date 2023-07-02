@@ -180,8 +180,8 @@ class GameArea : DrawingArea {
         foreach ( Move m in game.possibleMoves() ) {
             c.SetSourceColor( transparentHighlight );
             int rectSize = ( int ) ( individualGridEntryWidth * ( (float) gridEntrySizePercentage / 100 ));
-            int restPadding = ( individualGridEntryWidth - rectSize ) / 2;
-            c.Rectangle( x: topLeftGrid[ m.x, m.y ].x + innerGridPadding + entryPadding, y: topLeftGrid[ m.x, m.y ].y + innerGridPadding + restPadding, width: rectSize, height: rectSize);
+            int rectPadding = ( individualGridEntryWidth - rectSize ) / 2;
+            c.Rectangle( x: topLeftGrid[ m.x, m.y ].x + innerGridPadding + rectPadding, y: topLeftGrid[ m.x, m.y ].y + innerGridPadding + rectPadding, width: rectSize, height: rectSize);
             c.Fill();
         }
 
