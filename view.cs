@@ -9,7 +9,7 @@ using Timeout = GLib.Timeout;
 
 class GameArea : DrawingArea {
 
-    const bool debug = false;
+    bool debug = true;
 
     Game game;
     IPlayer player;
@@ -222,26 +222,37 @@ class MyWindow : Gtk.Window {
     Game game;
     IPlayer player;
     int minimaxDepth;
+    bool playerPlaysFirst;
+    int difficulty;
 
     public MyWindow() : base( "Ultimate Tic Tac Toe" ) {
         int size = 700;
         int padding = 95;
         Resize(size, size);
 
-        minimaxDepth = minimaxDepths[0];
+        difficulty = 0;
+        minimaxDepth = minimaxDepths[difficulty];
+        playerPlaysFirst = true;
         game = new Game();
-        player = new MinimaxPlayer( minimaxDepth ); //TO DO: Make this be based off selection in GUI
+        player = new MinimaxPlayer( minimaxDepth );
 
         Grid grid = new Grid();
         grid.ColumnSpacing = 100;
         grid.Expand = true;
+
         Button newGameButton = new Button("New game");
         newGameButton.Halign = Align.Start;
         newGameButton.Clicked += handleNewGame;
         grid.Attach( newGameButton, 0, 0, 1, 1 );
-        Button settingsButton = new Button("Settings");
+
+        Button settingsButton = new Button("");
         settingsButton.Halign = Align.End;
+        Image settingsImage = new Image("settings.png");
+        settingsButton.AlwaysShowImage = true;
+        settingsButton.Image = settingsImage;
+        settingsButton.Clicked += handleSettings;
         grid.Attach( settingsButton, 2, 0, 1, 1);
+
         Label turnLabel = new Label("Testing");
         turnLabel.Halign = Align.Center;
         turnLabel.Hexpand = true;
@@ -275,8 +286,117 @@ class MyWindow : Gtk.Window {
     void handleNewGame(object? sender, EventArgs args) {
         System.Console.WriteLine("New Game");
         game = new Game();
-        player = new MinimaxPlayer(minimaxDepth);
+        player = new MinimaxPlayer( minimaxDepth );
+        if ( !playerPlaysFirst ) area.computerShouldMove = true; area.inClickLockout = true;
         area.changeGame(game, player);
+    }
+
+    void handleSettings(object? sender, EventArgs args) {
+        Gtk.Window popup = new Gtk.Window("Settings");
+        popup.Resize(400, 400);
+
+        bool updatedPlayerFirst = playerPlaysFirst;
+        int updatedDifficulty = difficulty;
+
+        Grid grid = new Grid();
+        grid.RowSpacing = 10;
+        grid.ColumnHomogeneous = false;
+        grid.Expand = true;
+
+        grid.Attach( new Label(" "), 1, 0, 1, 1 );
+
+        Label startLabel = new Label("Who starts:");
+        startLabel.Hexpand = true;
+        startLabel.Halign = Align.Center;
+        grid.Attach( startLabel, 1, 1, 1, 1 );
+
+        RadioButton humanFirst = new RadioButton("You");
+        humanFirst.Halign = Align.Start;
+        if (updatedPlayerFirst) humanFirst.Active = true;
+        humanFirst.Clicked += handlePlayerFirst;
+        grid.Attach( humanFirst, 0, 2, 1, 1 );
+
+        void handlePlayerFirst(object? sender, EventArgs args) {
+            updatedPlayerFirst = true;
+        }
+
+        RadioButton computerFirst = new RadioButton(humanFirst, "Computer");
+        computerFirst.Halign = Align.End;
+        if (!updatedPlayerFirst) computerFirst.Active = true;
+        computerFirst.Clicked += handleComputerFirst;
+        grid.Attach( computerFirst, 2, 2, 1, 1 );
+
+        void handleComputerFirst(object? sender, EventArgs args) {
+            updatedPlayerFirst = false;
+        }
+
+        Label difficultyLabel = new Label("Choose a difficulty:");
+        difficultyLabel.Hexpand = true;
+        difficultyLabel.Halign = Align.Center;
+        grid.Attach( difficultyLabel, 1, 3, 1, 1 );
+
+        RadioButton easyButton = new RadioButton("Easy");
+        easyButton.Halign = Align.Start;
+        if (updatedDifficulty == 0) easyButton.Active = true;
+        easyButton.Clicked += handleEasy;
+        grid.Attach( easyButton, 0, 4, 1, 1 );
+
+        void handleEasy(object? sender, EventArgs args) {
+            updatedDifficulty = 0;
+        }
+
+        RadioButton intermediateButton = new RadioButton(easyButton, "Intermediate");
+        intermediateButton.Halign = Align.Center;
+        if (updatedDifficulty == 1) intermediateButton.Active = true;
+        intermediateButton.Clicked += handleIntermediate;
+        grid.Attach( intermediateButton, 1, 4, 1, 1 );
+
+        void handleIntermediate(object? sender, EventArgs args) {
+            updatedDifficulty = 1;
+        }
+
+        RadioButton hardButton = new RadioButton(easyButton, "Hard");
+        hardButton.Halign = Align.End;
+        if (updatedDifficulty == 2) hardButton.Active = true;
+        hardButton.Clicked += handleHard;
+        grid.Attach( hardButton, 2, 4, 1, 1 );
+
+        void handleHard(object? sender, EventArgs args) {
+            updatedDifficulty = 2;
+        }
+
+        Grid buttonGrid = new Grid();
+        buttonGrid.Expand = true;
+
+        Button cancelButton = new Button("Cancel");
+        cancelButton.Halign = Align.End;
+        cancelButton.Clicked += handleCancel;
+        buttonGrid.Attach(cancelButton, 0, 0, 1, 1);
+
+        void handleCancel(object? sender, EventArgs args) {
+            popup.Destroy();
+        }
+
+        Button confirmButton = new Button("Confirm");
+        confirmButton.Halign = Align.Start;
+        confirmButton.Clicked += handleConfirm;
+        buttonGrid.Attach(confirmButton, 1, 0, 1, 1);
+
+        void handleConfirm(object? sender, EventArgs args) {
+            playerPlaysFirst = updatedPlayerFirst;
+            difficulty = updatedDifficulty;
+            popup.Destroy();
+        }
+
+        Box box = new Box(Orientation.Vertical, 5);
+        box.Add( grid );
+        box.Add( new Separator(Orientation.Horizontal) );
+        box.Add( buttonGrid );
+
+        popup.Add( box );
+        popup.Modal = true;
+        popup.ShowAll();
+        popup.GrabFocus();
     }
     
     protected override bool OnDeleteEvent(Event ev) {
