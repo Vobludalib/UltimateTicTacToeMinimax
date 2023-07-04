@@ -9,10 +9,10 @@ using Timeout = GLib.Timeout;
 
 class GameArea : DrawingArea {
 
-    const bool debug = true;
+    const bool debug = false;
 
-    public Game game;
-    public IPlayer player;
+    Game game;
+    IPlayer player;
 
     int areaSize;
     int padding;
@@ -32,10 +32,13 @@ class GameArea : DrawingArea {
     public bool inClickLockout;
     public bool computerShouldMove;
 
-    public GameArea( int size, int padding ) {
+    public GameArea( int size, int padding, Game game, IPlayer player ) {
         canvas = new ImageSurface( Format.Rgb24, size, size );
         this.padding = padding;
         areaSize = size;
+
+        this.game = game;
+        this.player = player;
 
         using (Context c = new Context(canvas)) {
             c.SetSourceColor( white );
@@ -46,11 +49,15 @@ class GameArea : DrawingArea {
         wrongClick = false;
         inClickLockout = false;
 
-        game = new Game();
-        player = new MinimaxPlayer( 4 ); //TO DO: Make this be based off selection in GUI
         topLeftGrid = new (int,int)[ 9, 9 ];
         gridFilledOut = false;
         individualGridEntryWidth = ( ( areaSize - padding * 2 ) / 3 - innerGridPadding * 2 ) / 3;
+    }
+
+    public void changeGame(Game game, IPlayer player) {
+        this.game = game;
+        this.player = player;
+        QueueDraw();
     }
 
     void drawTicTacToeBoard( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, int stroke = 4, bool isSmallBoard = false, int smallBoardX = -1, int smallBoardY = -1 ) {
@@ -145,7 +152,7 @@ class GameArea : DrawingArea {
         for ( int x = 0; x < 3; ++x ) {
             for ( int y = 0; y < 3; ++y ) {
                 int? winner = game.bigGrid[ x, y ].winner();
-                System.Console.WriteLine($"Game at {x}, {y} has winner {winner}");
+                if (debug) System.Console.WriteLine($"Game at {x}, {y} has winner {winner}");
                 Color color = black;
                 if ( winner is null ) continue;
                 else if ( winner == 1 ) {
@@ -210,25 +217,66 @@ class GameArea : DrawingArea {
 
 class MyWindow : Gtk.Window {
 
+    int[] minimaxDepths = { 2, 4, 6 };
     GameArea area;
+    Game game;
+    IPlayer player;
+    int minimaxDepth;
+
     public MyWindow() : base( "Ultimate Tic Tac Toe" ) {
         int size = 700;
         int padding = 95;
         Resize(size, size);
-        area = new GameArea( size, padding );
-        Add( area );
+
+        minimaxDepth = minimaxDepths[0];
+        game = new Game();
+        player = new MinimaxPlayer( minimaxDepth ); //TO DO: Make this be based off selection in GUI
+
+        Grid grid = new Grid();
+        grid.ColumnSpacing = 100;
+        grid.Expand = true;
+        Button newGameButton = new Button("New game");
+        newGameButton.Halign = Align.Start;
+        newGameButton.Clicked += handleNewGame;
+        grid.Attach( newGameButton, 0, 0, 1, 1 );
+        Button settingsButton = new Button("Settings");
+        settingsButton.Halign = Align.End;
+        grid.Attach( settingsButton, 2, 0, 1, 1);
+        Label turnLabel = new Label("Testing");
+        turnLabel.Halign = Align.Center;
+        turnLabel.Hexpand = true;
+        grid.Attach( turnLabel, 1, 0, 1, 1 );
+
+        area = new GameArea( size, padding, game, player );
+        area.WidthRequest = size;
+        area.HeightRequest = size;
+
+        Box totalBox = new Box(Orientation.Vertical, 5);
+        totalBox.Add( grid );
+        totalBox.Add( new Separator( Orientation.Horizontal ) );
+        totalBox.Add( area );
+        totalBox.Expand = true;
+        Add( totalBox );
+
         Timeout.Add( 500, onTimeout );
     }
 
     bool onTimeout() {
         if ( area.inClickLockout && area.computerShouldMove ) {
-            Move? move = area.player.move( area.game );
-            if ( move is not null ) area.game.move( move );
+            Move? move = player.move( game );
+            if ( move is not null ) game.move( move );
             area.inClickLockout = false;
             area.computerShouldMove = false;
             QueueDraw();
         }
         return true;
+    }
+
+    void handleNewGame(object? sender, EventArgs args) {
+        System.Console.WriteLine("New Game");
+        game = new Game();
+        player = new MinimaxPlayer(minimaxDepth);
+        area.changeGame(game, player);
     }
     
     protected override bool OnDeleteEvent(Event ev) {
