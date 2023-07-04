@@ -140,7 +140,7 @@ public class Game {
         return returnList;   
     }
 
-    public bool move( Move m, bool humanMove = false ) { //TO DO: RETURN FALSE IF MOVE NOT IN POSSIBLE MOVES
+    public bool move( Move m, bool humanMove = false ) {
         //MAKE A MOVE - RETURN FALSE IF NOT A LEGAL MOVE
         if ( humanMove ) { //This is here so we only check through the list of possible legal moves on human turns, as the computer only will ever return legal moves
             bool foundEquivalentMove = false;

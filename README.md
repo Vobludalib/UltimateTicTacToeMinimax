@@ -7,9 +7,9 @@ Ultimate Tic Tac Toe Minimax Player
 TO DO:
  - Settings menu
     - Change search depth
- - View:
     - Add new game option
     - Add start game setup
+ - View:
     - Dynamic resizing
  - Game:
     - Improve heuristic
