@@ -7,12 +7,15 @@ using Key = Gdk.Key;
 using static Gdk.EventMask;
 using Timeout = GLib.Timeout;
 
+delegate void NotifyMove();
+
 class GameArea : DrawingArea {
 
     bool debug = true;
 
     Game game;
     IPlayer player;
+    event NotifyMove moveMade;
 
     int areaSize;
     int padding;
@@ -32,7 +35,7 @@ class GameArea : DrawingArea {
     public bool inClickLockout;
     public bool computerShouldMove;
 
-    public GameArea( int size, int padding, Game game, IPlayer player ) {
+    public GameArea( int size, int padding, Game game, IPlayer player, NotifyMove moveMadeEvent ) {
         canvas = new ImageSurface( Format.Rgb24, size, size );
         this.padding = padding;
         areaSize = size;
@@ -52,6 +55,7 @@ class GameArea : DrawingArea {
         topLeftGrid = new (int,int)[ 9, 9 ];
         gridFilledOut = false;
         individualGridEntryWidth = ( ( areaSize - padding * 2 ) / 3 - innerGridPadding * 2 ) / 3;
+        moveMade = moveMadeEvent;
     }
 
     public void changeGame(Game game, IPlayer player) {
@@ -208,7 +212,7 @@ class GameArea : DrawingArea {
         if ( gridX > 8 || gridY > 8 || gridX < 0 || gridY < 0 ) wrongClick = true;
         else {
             bool result = game.move( new Move( gridX, gridY ), true );
-            if ( !result ) wrongClick = true; else inClickLockout = true; computerShouldMove = true;
+            if ( !result ) wrongClick = true; else inClickLockout = true; computerShouldMove = true; if ( moveMade != null ) moveMade();
         }
         QueueDraw();
         return true;
@@ -221,6 +225,8 @@ class MyWindow : Gtk.Window {
     GameArea area;
     Game game;
     IPlayer player;
+    event NotifyMove moveMade;
+    Label turnLabel;
     int minimaxDepth;
     bool playerPlaysFirst;
     int difficulty;
@@ -253,12 +259,14 @@ class MyWindow : Gtk.Window {
         settingsButton.Clicked += handleSettings;
         grid.Attach( settingsButton, 2, 0, 1, 1);
 
-        Label turnLabel = new Label("Testing");
+        turnLabel = new Label("");
+        handleMove();
         turnLabel.Halign = Align.Center;
         turnLabel.Hexpand = true;
         grid.Attach( turnLabel, 1, 0, 1, 1 );
 
-        area = new GameArea( size, padding, game, player );
+        moveMade += handleMove;
+        area = new GameArea( size, padding, game, player, moveMade );
         area.WidthRequest = size;
         area.HeightRequest = size;
 
@@ -276,6 +284,7 @@ class MyWindow : Gtk.Window {
         if ( area.inClickLockout && area.computerShouldMove ) {
             Move? move = player.move( game );
             if ( move is not null ) game.move( move );
+            if ( moveMade != null ) moveMade();
             area.inClickLockout = false;
             area.computerShouldMove = false;
             QueueDraw();
@@ -283,11 +292,18 @@ class MyWindow : Gtk.Window {
         return true;
     }
 
+    void handleMove() {
+        if ( ( playerPlaysFirst && game.turn == 1 ) || ( !playerPlaysFirst && game.turn == 2 ) ) turnLabel.Text = "Your turn";
+        else turnLabel.Text = "Computer's turn";
+    }
+
     void handleNewGame(object? sender, EventArgs args) {
         System.Console.WriteLine("New Game");
         game = new Game();
         player = new MinimaxPlayer( minimaxDepth );
-        if ( !playerPlaysFirst ) area.computerShouldMove = true; area.inClickLockout = true;
+        if ( !playerPlaysFirst ) { area.computerShouldMove = true; area.inClickLockout = true; }
+        else { area.inClickLockout = false; area.computerShouldMove = false; }
+        handleMove();
         area.changeGame(game, player);
     }
 
@@ -398,6 +414,8 @@ class MyWindow : Gtk.Window {
         popup.ShowAll();
         popup.GrabFocus();
     }
+
+
     
     protected override bool OnDeleteEvent(Event ev) {
         Application.Quit();
