@@ -24,6 +24,7 @@ class GameArea : DrawingArea {
     (int x, int y)[,] topLeftGrid;
     bool gridFilledOut;
     int horizontalOffset;
+    int verticalOffset;
 
     ImageSurface canvas;
     Color red = new Color( 1, 0, 0 ),
@@ -56,10 +57,16 @@ class GameArea : DrawingArea {
         gridFilledOut = false;
         individualGridEntryWidth = ( ( areaSize - padding * 2 ) / 3 - innerGridPadding * 2 ) / 3;
         moveMade = moveMadeEvent;
+
+        horizontalOffset = 0;
+        verticalOffset = 0;
     }
 
-    public void handleNewHorizontalOffset ( int newHorizontalOffset ) {
-        horizontalOffset = newHorizontalOffset;
+    public void handleNewSize( int newSize ) {
+        areaSize = newSize;
+        horizontalOffset = (int) ( AllocatedWidth - areaSize ) / 2;
+        verticalOffset = (int) ( AllocatedHeight - areaSize ) / 2;
+        individualGridEntryWidth = ( ( areaSize - padding * 2 ) / 3 - innerGridPadding * 2 ) / 3;
         gridFilledOut = false;
         QueueDraw();
     }
@@ -71,7 +78,7 @@ class GameArea : DrawingArea {
     }
 
     void drawTicTacToeBoard( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, int stroke = 4, bool isSmallBoard = false, int smallBoardX = -1, int smallBoardY = -1 ) {
-        if ( debug ) System.Console.WriteLine($"Drawing board from {topLeftX + horizontalOffset}, {topLeftY} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
+        if ( debug ) System.Console.WriteLine($"Drawing board from {topLeftX + horizontalOffset}, {topLeftY + verticalOffset} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
         c.SetSourceColor( black );
         c.LineWidth = stroke;
         
@@ -83,21 +90,21 @@ class GameArea : DrawingArea {
                 for ( int y = 0; y < 3; ++y ) {
                     int xDivision = x > 0 ? divisions[ x - 1 ] - paddingFromTopLeft : 0;
                     int yDivision = y > 0 ? divisions[ y - 1 ] - paddingFromTopLeft : 0;
-                    topLeftGrid[ smallBoardX * 3 + x, smallBoardY * 3 + y ] = (topLeftX + xDivision + horizontalOffset, topLeftY + yDivision);
-                    if ( debug ) System.Console.WriteLine($"Top left of cell at: {topLeftX + xDivision + horizontalOffset}, {topLeftY + yDivision}");
+                    topLeftGrid[ smallBoardX * 3 + x, smallBoardY * 3 + y ] = (topLeftX + xDivision + horizontalOffset, topLeftY + yDivision + verticalOffset);
+                    if ( debug ) System.Console.WriteLine($"Top left of cell at: {topLeftX + xDivision + horizontalOffset}, {topLeftY + yDivision + verticalOffset}");
                 }
             }
         }
 
         for ( int i = 0; i < 2; ++i ) {
-            c.MoveTo( topLeftX + divisions[ i ] + horizontalOffset, paddingFromTopLeft + topLeftY );
-            c.LineTo( topLeftX + divisions[ i ] + horizontalOffset, paddingFromTopLeft + boardSizeWithPadding + topLeftY );
+            c.MoveTo( topLeftX + divisions[ i ] + horizontalOffset, paddingFromTopLeft + topLeftY + verticalOffset);
+            c.LineTo( topLeftX + divisions[ i ] + horizontalOffset, paddingFromTopLeft + boardSizeWithPadding + topLeftY + verticalOffset);
             c.Stroke();
         }
 
         for ( int i = 0; i < 2; ++i ) {
-            c.MoveTo( paddingFromTopLeft + topLeftX + horizontalOffset, topLeftY + divisions[ i ] );
-            c.LineTo( paddingFromTopLeft + boardSizeWithPadding + topLeftX + horizontalOffset, topLeftY + divisions[ i ] );
+            c.MoveTo( paddingFromTopLeft + topLeftX + horizontalOffset, topLeftY + divisions[ i ] + verticalOffset);
+            c.LineTo( paddingFromTopLeft + boardSizeWithPadding + topLeftX + horizontalOffset, topLeftY + divisions[ i ] + verticalOffset);
             c.Stroke();
         }
     }
@@ -213,7 +220,7 @@ class GameArea : DrawingArea {
         wrongClick = false;
         int smallBoardWidth = ( areaSize - padding * 2 ) / 9;
         int gridX = (int) Math.Floor( ( e.X - padding - horizontalOffset ) / smallBoardWidth );
-        int gridY = (int) Math.Floor( ( e.Y - padding ) / smallBoardWidth );
+        int gridY = (int) Math.Floor( ( e.Y - padding - verticalOffset) / smallBoardWidth );
         if ( debug ) System.Console.WriteLine($"Clicked on board with coords { gridX }, { gridY }");
         if ( gridX > 8 || gridY > 8 || gridX < 0 || gridY < 0 ) wrongClick = true;
         else {
@@ -228,8 +235,8 @@ class GameArea : DrawingArea {
 class MyWindow : Gtk.Window {
     const int defaultWindowSize = 650;
     const int defaultPaddingForArea = 20;
-    int currSize;
-    int currPadding;
+    int currAreaSize;
+    int currAreaPadding;
 
     int[] minimaxDepths = { 2, 4, 6 };
     GameArea area;
@@ -244,8 +251,8 @@ class MyWindow : Gtk.Window {
     public MyWindow() : base( "Ultimate Tic Tac Toe" ) {
         int size = defaultWindowSize;
         int padding = defaultPaddingForArea;
-        currSize = size;
-        currPadding = padding;
+        currAreaSize = size;
+        currAreaPadding = padding;
         Resize(size, size);
 
         difficulty = 0;
@@ -283,13 +290,16 @@ class MyWindow : Gtk.Window {
         area.WidthRequest = size;
         area.HeightRequest = size;
         area.Hexpand = true;
+        area.Vexpand = true;
 
         Box totalBox = new Box(Orientation.Vertical, 5);
-        totalBox.Add( grid );
-        totalBox.Add( new Separator( Orientation.Horizontal ) );
-        totalBox.Add( area );
-        totalBox.Expand = true;
-        Add( totalBox );
+        Grid totalGrid = new Grid();
+        totalGrid.Attach( grid, 0, 0, 1, 1 );
+        totalGrid.Attach( new Separator( Orientation.Horizontal ), 0, 1, 1, 1 );
+        totalGrid.Attach( area, 0, 2, 1, 1 );
+        totalGrid.Expand = true;
+        totalGrid.RowHomogeneous = false;
+        Add( totalGrid );
 
         Timeout.Add( 500, onTimeout );
     }
@@ -309,10 +319,10 @@ class MyWindow : Gtk.Window {
     protected override bool OnConfigureEvent(EventConfigure e)
     {
         base.OnConfigureEvent(e);
-        // currSize = e.Height > e.Width ? e.Height : e.Width;
+        currAreaSize = area.AllocatedHeight > area.AllocatedWidth ? area.AllocatedWidth : area.AllocatedHeight;
         System.Console.WriteLine($"Window actual size is: {this.AllocatedWidth} x {this.AllocatedHeight}");
         System.Console.WriteLine($"Area actual size is: {area.AllocatedWidth} x {area.AllocatedHeight}");
-        area.handleNewHorizontalOffset( (int) ( area.AllocatedWidth - area.areaSize ) / 2 );
+        area.handleNewSize(currAreaSize);
         return true;
     }
 
