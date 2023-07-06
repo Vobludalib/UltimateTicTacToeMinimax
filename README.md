@@ -6,8 +6,8 @@ Ultimate Tic Tac Toe Minimax Player
 
 TO DO:
  - View:
-    - Resizing when fullscreen
-    - Refactor code to better handle the offsets
+    - Handle dynamic sizing when fullscreening ( NOT IMPORTANT )
+    - Handle changing difficulty mid-game
  - Game:
     - Fix winner evaluation when computer plays first
     - Improve heuristic
