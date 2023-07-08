@@ -11,4 +11,4 @@ TO DO:
  - Game:
     - Fix winner evaluation when computer plays first
     - Improve heuristic
-    - Tournament style to determine heuristic values
+    - Alpha-beta pruning
