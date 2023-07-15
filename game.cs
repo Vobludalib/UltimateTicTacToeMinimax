@@ -230,6 +230,9 @@ public class Game {
                 sum += smallSum;
             }
         }
+        // Required to make sure the heuristic will never beat out an actual winning move
+        if ( sum >= 1000  ) sum = 999;
+        else if ( sum <= -1000 ) sum = -999;
         return sum;
     }
 

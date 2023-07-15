@@ -9,5 +9,4 @@ TO DO:
     - Handle dynamic sizing when fullscreening ( NOT IMPORTANT )
  - Game:
     - Fix winner evaluation when computer plays first
-    - Improve heuristic
     - Alpha-beta pruning
