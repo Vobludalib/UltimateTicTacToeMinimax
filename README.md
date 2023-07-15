@@ -8,5 +8,3 @@ TO DO:
  - View:
     - Handle dynamic sizing when fullscreening ( NOT IMPORTANT )
  - Game:
-    - Fix winner evaluation when computer plays first
-    - Alpha-beta pruning
