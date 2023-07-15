@@ -206,8 +206,8 @@ public class Game {
         return won;
     }
 
-    public double heuristicEval() {
-        double sum = 0.0;
+    public int heuristicEval() {
+        int sum = 0;
         for ( int x = 0; x < 3; ++x ) {
             for ( int y = 0; y < 3; ++y ) {
                 if ( bigGrid[ x, y ].won != -1 ) {
@@ -306,7 +306,7 @@ public class Game {
 public class MinimaxPlayer : IPlayer {
 
     int maxDepth;
-    double[] outcomes = new double[] { 0.0, 1000.0, -1000.0 };
+    int[] outcomes = new int[] { 0, 1000, -1000 };
 
     public MinimaxPlayer( int maxDepth ) {
         this.maxDepth = maxDepth;
@@ -314,24 +314,24 @@ public class MinimaxPlayer : IPlayer {
 
     public Move? move( Game gamestate ) { //Given a gamestate returns who would win and what the optimal move to make is
         Move? returnMove = null;
-        minimax( gamestate, 0, out returnMove );
+        minimax( gamestate, 0, outcomes[2], outcomes[1], out returnMove );
         return returnMove;
     }
 
-    double minimax( Game gamestate, int depth, out Move? best ) { //Same, but this is where all the good stuff gets done
+    int minimax( Game gamestate, int depth, int alpha, int beta, out Move? best ) { //Same, but this is where all the good stuff gets done
         best = null;
         if ( gamestate.won > -1 ) return outcomes[ gamestate.won ];
         
         if ( depth >= maxDepth ) return gamestate.heuristicEval();
 
         bool maximizing = gamestate.turn == 1;
-        double currOptimal = maximizing ? int.MinValue : int.MaxValue;
+        int currOptimal = maximizing ? int.MinValue : int.MaxValue;
 
         List<Move> bestMoves = new List<Move>();
         
         foreach ( Move move in gamestate.possibleMoves() ) {
             gamestate.move( move );
-            double thisMovesMinimaxVal = minimax( gamestate, depth + 1, out Move? _ );
+            int thisMovesMinimaxVal = minimax( gamestate, depth + 1, alpha, beta, out Move? _ );
             gamestate.unmove( move );
             if ( thisMovesMinimaxVal == currOptimal ) {
                 bestMoves.Add( move );
@@ -341,6 +341,15 @@ public class MinimaxPlayer : IPlayer {
                 bestMoves = new List<Move>();
                 bestMoves.Add(move);
                 best = move;
+                if (maximizing) {
+                    if ( currOptimal >= beta )
+                        return currOptimal;
+                    alpha = alpha > currOptimal ? alpha : currOptimal;
+                } else {
+                    if ( currOptimal <= alpha )
+                        return currOptimal;
+                    beta = beta < currOptimal ? beta : currOptimal;
+                }
             }
         }
 

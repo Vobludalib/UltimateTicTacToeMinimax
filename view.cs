@@ -464,7 +464,7 @@ class GameArea : DrawingArea {
 
         // If the game has a winner, display it
         if ( game.winner() >= 0 ) {
-            System.Console.WriteLine($"Game has winner {game.winner()}");
+            if (debug) System.Console.WriteLine($"Game has winner {game.winner()}");
             inClickLockout = true;
             computerShouldMove = false;
             string s;
