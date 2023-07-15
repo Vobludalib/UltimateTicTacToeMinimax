@@ -206,7 +206,7 @@ public class Game {
         return won;
     }
 
-    public double heuristicEval() { //TO DO: IMPROVE
+    public double heuristicEval() {
         double sum = 0.0;
         for ( int x = 0; x < 3; ++x ) {
             for ( int y = 0; y < 3; ++y ) {
@@ -326,17 +326,27 @@ public class MinimaxPlayer : IPlayer {
 
         bool maximizing = gamestate.turn == 1;
         double currOptimal = maximizing ? int.MinValue : int.MaxValue;
+
+        List<Move> bestMoves = new List<Move>();
         
         foreach ( Move move in gamestate.possibleMoves() ) {
             gamestate.move( move );
             double thisMovesMinimaxVal = minimax( gamestate, depth + 1, out Move? _ );
             gamestate.unmove( move );
+            if ( thisMovesMinimaxVal == currOptimal ) {
+                bestMoves.Add( move );
+            }
             if ( maximizing ? thisMovesMinimaxVal > currOptimal : thisMovesMinimaxVal < currOptimal ) {
                 currOptimal = thisMovesMinimaxVal;
+                bestMoves = new List<Move>();
+                bestMoves.Add(move);
                 best = move;
             }
         }
 
+        int amountOfBestMoves = bestMoves.Count;
+        var rand = new Random();
+        best = bestMoves[rand.Next(0, amountOfBestMoves)];
         return currOptimal;
     }
 }
