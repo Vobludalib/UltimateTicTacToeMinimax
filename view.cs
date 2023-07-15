@@ -141,6 +141,7 @@ class MyWindow : Gtk.Window {
     void handleSettings(object? sender, EventArgs args) {
         // Create a new popup window
         Gtk.Window popup = new Gtk.Window("Settings");
+        popup.PresentWithTime(0);
         popup.Resize(400, 400);
 
         bool updatedPlayerFirst = playerPlaysFirst;
@@ -154,7 +155,7 @@ class MyWindow : Gtk.Window {
 
         grid.Attach( new Label(" "), 1, 0, 1, 1 );
 
-        Label startLabel = new Label("Who starts:");
+        Label startLabel = new Label("Who starts: (only applies when a new game starts)");
         startLabel.Hexpand = true;
         startLabel.Halign = Align.Center;
         grid.Attach( startLabel, 1, 1, 1, 1 );
@@ -238,6 +239,7 @@ class MyWindow : Gtk.Window {
         void handleConfirm(object? sender, EventArgs args) {
             playerPlaysFirst = updatedPlayerFirst;
             difficulty = updatedDifficulty;
+            player = new MinimaxPlayer( minimaxDepths[ (int) difficulty ] );
             popup.Destroy();
         }
 
