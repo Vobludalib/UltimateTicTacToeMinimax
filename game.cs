@@ -198,7 +198,7 @@ public class Game {
         return true;
     }
 
-    public double? winner() { //TO DO: REFACTOR WINNER CHECKS TO WORK FOR BOTH SMALL AND BIG GAME - MAKE IT SO THAT IT ALSO CHECKS FOR TIES
+    public int? winner() { //TO DO: REFACTOR WINNER CHECKS TO WORK FOR BOTH SMALL AND BIG GAME - MAKE IT SO THAT IT ALSO CHECKS FOR TIES
         //RETURNS NULL IF NO WINNER, OTHERWISE ID OF PLAYER WHO WON
         if ( won == -1 ) {
             return null;
@@ -214,7 +214,7 @@ public class Game {
                     if ( bigGrid[ x, y ].won == 0 ) {
                         continue;
                     } else {
-                        sum += -1000 * ( ( bigGrid[ x, y ].won * 2 ) - 3 );
+                        sum += -100 * ( ( bigGrid[ x, y ].won * 2 ) - 3 );
                         continue;
                     }
                 }
@@ -251,13 +251,13 @@ public class Game {
 
         // Check rows and columns
         for ( int i = 0 ; i < 3 ; ++i )
-            if ( checkDirection( i, 0, 0, 1, out winner ) || checkDirection( 0, i, 1, 0, out winner ) ) {
+            if ( !winnerFound && ( checkDirection( i, 0, 0, 1, out winner ) || checkDirection( 0, i, 1, 0, out winner ) ) ) {
                 if ( winner != 0 ) won = winner;
                 winnerFound = true;
             }
                 
         // Check diagonals
-        if ( checkDirection( 0, 0, 1, 1, out winner ) || checkDirection( 2, 0, -1, 1, out winner ) ) {
+        if ( !winnerFound && ( checkDirection( 0, 0, 1, 1, out winner ) || checkDirection( 2, 0, -1, 1, out winner ) ) ) {
             if ( winner != 0 ) won = winner;
             winnerFound = true;
         }
