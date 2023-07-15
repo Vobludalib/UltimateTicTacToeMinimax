@@ -1,0 +1,204 @@
+# Developer Documentation
+
+## Project organisation
+- game.cs
+  - File with all implementation of the game logic and computer agent
+- view.cs
+  - File with all GUI implementation and main function
+- Resources
+  - Directory holding all images etc. of the project
+- README.md
+  - Read me file for Github holding user documentation
+- UTTTMinimx.csproj
+  - C Sharp file holding project metadata
+- devdocs.md
+  - Markdown file holding developer documentation ( I hope you figured that out by now )
+
+## game.cs
+- ### IPlayer
+  - Interface with the bare minimum a player agent implementation has to have
+  - move()
+    - the move() method should, given a given gamestate return the optimal move
+- ### Move
+  - Class that is a wrapper for 2D coordinates ( essentially replacing tuples, as it is less clumsy to work with )
+  - print()
+    - Print method used for debugging when necessary
+  - **NOTE:** could be expanded to overload the == operator to allow easier comparisons, but this is not a priority
+- ### Game
+  - Class that holds a given gamestate ( how the grid is filled, who's turn it is etc. )
+  - ### SmallGame
+    - grid
+      - 2D array that holds the ID ( 1 for player 1 and 2 for player 2 ) that represents a given 'small board' ( 3x3 grid that is one cell of the large grid )
+    - movesMade
+      - Keeps track of amount of moves to handle ties
+    - won
+      - Keeps track of which player has won this board, or if there is a tie ( same ID as described above ), with 0 meaning a tie, and a -1 being no winner/tie
+    - winner()
+      - Wrapper getter for won, that returns null instead of -1 if there is no winner
+    - updateWinner()
+      - Method that checks if the given small board has a winner/tie
+    - checkDirection()
+      - Helper method for updateWinner(); see code comments for explanation
+  - bigGrid
+    - 2D array of SmallGames, which represents the 'macro' grid of the game
+  - movesMade
+    - same as SmallGame
+  - turn
+    - Stores the ID of the player who's turn it currently is
+  - won
+    - same as SmallGame
+  - previousMoves
+    - Stack of previous moves so that when making a move and then unmoving you keep track of all the previous moves. This is needed, as the next turn's allowed moves rely on the previous move
+  - previousPlayAnywhere
+    - Stack of booleans that stores if the player was sent to an already won square. Corresponds 1:1 to previousMoves
+  - playAnywhere
+    - Current state of if we were just sent to an already won square
+  - Game()
+    - Constructor that correctly sets initial values
+  - possibleMoves()
+    - Returns a list of all valid moves to be made next turn given the current game state and previous move
+  - move()
+    - Method to make a given move ( and check if it's valid in case there exists a bug in the input checking ). This method then calls all necessary updateWinner() methods and updates the necessary values to reflect the move
+  - unmove()
+    - Literally the opposite of the above, needed for minimax
+  - winner()
+    - Same as the method in SmallGame, wrapper method for won
+  - updateWinner()
+    - Checks if there is a winner or tie given the current grid state. **DOES NOT CHECK ALL INDIVIDUAL SMALL GRIDS, THIS METHOD ASSUMES THESE ARE CORRECTLY UPDATED BEFORE ENTERING THIS METHOD**
+  - checkDirection()
+    - Helper method for updateWinner(), same as in SmallGame
+  - prettyPrint()
+    - Method for debugging by printing to console. **I recommend using this in case the GUI is buggy to see the true board state**
+- ### MinimaxPlayer
+  - Class that implements the minimax logic for the IPlayer interface
+  - maxDepth
+    - Stores the maximum minimax depth before running the heuristic evaluation
+  - outcomes
+    - Array storing the values for when player 1 / 2 wins or a tie
+  - move()
+    - Starts the minimax search from a given gamestate and returns the best move
+  - minimax()
+    - Minimax function for a given game state and depth
+    - If max depth is exceeded, then the heuristic evaluation is called
+    - Implements alpha-beta pruning
+  - heuristicEval()
+    - Given a game state, returns an approximation of the board strength. It's fairly dumb, as it prioritises simply taking 'macro' cells, with then favouring simply having as many entries in non-taken cells
+## view.cs
+- NotifyMove()
+  - Delegate used for NotifyMove event that handles event communication between the AppWindow and GameArea
+- ### AppWindow
+  - debug
+    - If set to true, additional debugging statements are printed to the console. These pertain to the game and window itself
+  - defaultWindowSize/defaultPaddingForArea
+    - Default startup values for window sizing
+  - minimaxDepths
+    - Array holding the minimax depths for each difficulties. **Each difficutly only differs by increasing the maximum search depth before using the heuristic evaluation function**
+  - area
+    - Holds the GameArea that draws the actual boards
+  - game
+    - Stores the actual game object
+  - player
+    - Stores the minimax agent currently to be used
+  - moveMode
+    - The event used for event communication with the GameArea
+  - turnLabel
+    - Gtk Label that is stored to be changed to show who's turn it is / notify of wins
+  - minimaxDepth
+    - Holds the current max minimax depth
+  - playerPlaysFirst
+    - Is true if the human player plays first in the next new game
+  - playerPlaysFirstOnStartup
+    - Only change if you wish for the computer to have the first when you start up the application
+  - difficulties
+    - Enum for having names in the code instead of 0, 1, 2 for difficulties
+  - defualtDifficulty
+    - Sets the default difficutly when you start the app
+  - difficulty
+    - Stores the current active difficulty
+  - AppWindow()
+    - Constructor
+    - Set appropriate sizing
+    - Set default values
+    - Creates a GTK Grid widget that is used for the layout of the app
+    - Creates another GTK Grid widget that is the top bar and all appropriate widgets
+    - Creates the GameArea 
+    - Attach these two elements to the layout grid as needed
+    - Add the total grid to the window itself
+    - Add the onTimeout method to be called every 500ms ( this handles the checking of whether or not it's the computer's turn ). This could have been handled through events, but I opted for polling so that the computer feels more 'human' by taking more time to take actions so the player can have more time to actually 'see' the computer's turn
+    - **NOTE:** because of the implementation of the board as just one big GTK DrawArea, it is *much* harder to write automated UI tests using something like FlaUI, as you cannot easily select individual cells but have to go by unreliable pixels values (if the testing libraries even support it). It sucks, but refactoring this to work using widgets on a grid while maintaining the ease-of-use of having full control over the drawing would take so much time that it is not worth the tradeoff.
+  - onTimeout()
+    - Method the checks if it is the computer's turn, and then makes a move if necessary. See MyWindow() documentation for why polling was used instead of events
+  - onConfigureEvent
+    - Method that handles the resizing of the window. Calls the base onConfigureEvent function, and then calls the DrawArea handler handleNewSize() to resize the drawn board correctly
+  - handleMove()
+    - Method to handle when a move is made. Handles updating the turn label according to the current state
+  - handleNewGame()
+    - Handler for when a new game is created. Creates a blank game and minimax player based on the current difficulty set and sets values according to who plays first in the new game.
+  - handleSettings()
+    - Handler for when the settings button is created.
+    - Creates a new window that takes focus and is 'modal' ( i.e. blocks interaction with other parts of the application ).
+    - This window is filled using a GTK Grid that is filled with Labels and RadioButtons with appropriate handlers and a cancel and confirm button.
+    - **NOTE:** I opted against using the built-in GTK Dialog box, as it was not easy to add radio buttons to it without breaking the layout without using deprecated methods.
+  - OnDeleteEvent()
+    - When the window manager of the OS says the window is 'deleted' ( think the X in the top right of the window in Windows ), we kill the app
+- ### GameArea
+  - debug
+    - If set to true, additional debugging statements are printed to the console. These pertain to interacting with the GameArea itself.
+  - game
+    - Reference to the game; needed when drawing
+  - moveMade
+    - See previous documentation
+  - areaSize
+    - Stores the size of the width and length of the 'actual' area. This is needed, as the actual allocated area for the drawing area could be non-square
+  - padding
+    - The padding from the sides of the 'actual' area for where to draw
+  - gridEntrySizePercentage
+    - This constant specify the size of elements inside each grid space
+  - innerGridPadding
+    - This constant specify the padding of elements inside each grid space
+  - individualGridEntryWidth
+    - Worked out based on size, padding, inner grip padding and gridEntrySizePercentage
+  - topLeftGrid
+    - 2D array that stores the actual pixel values of the top left of each grid square ( e.g. the actual pixel value of the top left of the square at 0-based coordinates 2, 3 would be at topLeftGrid[2, 3] )
+  - gridFilledOut
+    - Bool that stores whether or not the topLeftGrid has to be recomputed
+  - horizontalOffset
+    - **KINDA IMPORTANT:** This and the next offsets are used to offset from the actual pixel values of the allocated size, transforming  higher-level functions to work as if the drawing area was always square
+  - verticalOffset
+    - See above
+  - canvas
+    - GTK ImageSurface that we draw on
+  - red, blue, black, white, transparentHighlight
+    - Constant color definitions for ease of reading
+  - inClickLockout
+    - Stores whether or not the application should actually treat user clicks
+  - computerShouldMove
+    - If it's the computer's turn, this is set to true. This is seperate from game.turn, as game.turn changes when going through minimax, so to prevent weird untraceable bugs, I seperated them
+  - GameArea()
+    - Constructor that sets default values and sets the correct event handlers for ButtonPress events
+  - handleNewSize()
+    - Handler called when the window is resized, which handles working out the horizontal, vertical offsets and scaling for cell elements
+  - changeGame()
+    - Wrapper function that allows changing of the game reference, called in the newGame handler of the AppWindow
+  - **NOTE:**The pixel coordinates in method parameters all take the 'adjusted' pixel value ( i.e. putting topLeftX = 100 will mean it will be drawn 100 + horizontalOffset )
+  - drawTicTacToeBoard()
+    - Method for drawing a tic tac board, with seperate handling for the small and large boards and recalculating the topLeftGrid when needed
+  - drawCross()
+    - Method for drawing a cross
+  - drawCircle()
+    - Method for drawing a circle
+  - onDrawn()
+    - Called when queueDraw() is called etc. Handles the entire drawing process of the GameArea. It goes in the following order:
+      - Draws the UTTT board
+      - Display all the grid entries ( x's and o's )
+      - Covers over all wons 'macro' cells with the player's colour
+      - If the game has a winner or tie, then it handles displaying that info; **NOTE:** this interacts with AppWindow through the event even though theoretically it could be refactor in some way to not do this, but this would require some serious GTKSharp wizardry that I, quite frankly, cannot be bothered to do given GTKSharp has no documentation
+      - Highlight all the legal moves of the current player
+    - OnButtonPressEvent()
+      - Method that handles when the user clicks inside the DrawArea. It checks for the legality of the click 'inside' the board and then calls appropriate handlers.
+- ### Program
+  - Class that holds main
+  - Main()
+    - Initialises the GTK app
+    - Creates the window and shows it
+    - Runs the app

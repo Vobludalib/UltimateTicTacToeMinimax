@@ -8,7 +8,7 @@ using Timeout = GLib.Timeout;
 delegate void NotifyMove();
 
 // Window class that handles the application
-class MyWindow : Gtk.Window {
+class AppWindow : Gtk.Window {
     // If true, prints debugging statements to console
     bool debug = false;
 
@@ -30,7 +30,7 @@ class MyWindow : Gtk.Window {
     const difficulties defaultDifficulty = difficulties.Intermediate;
     difficulties difficulty;
 
-    public MyWindow() : base( "Ultimate Tic Tac Toe" ) {
+    public AppWindow() : base( "Ultimate Tic Tac Toe" ) {
         int size = defaultWindowSize;
         int padding = defaultPaddingForArea;
         Resize(size, size);
@@ -57,7 +57,7 @@ class MyWindow : Gtk.Window {
         // Create the settings button and attach it to the grid
         Button settingsButton = new Button("");
         settingsButton.Halign = Align.End;
-        Image settingsImage = new Image("settings.png");
+        Image settingsImage = new Image("Resources/settings.png");
         settingsButton.AlwaysShowImage = true;
         settingsButton.Image = settingsImage;
         settingsButton.Clicked += handleSettings;
@@ -140,13 +140,13 @@ class MyWindow : Gtk.Window {
 
     // Handler for when a new game is created, which creates a new game, sets turn trackers and creates a new player based on the new difficulty
     void handleNewGame(object? sender, EventArgs args) {
-        System.Console.WriteLine("New Game");
+        if (debug) System.Console.WriteLine("New Game");
         game = new Game();
         player = new MinimaxPlayer( minimaxDepth );
         if ( !playerPlaysFirst ) { area.computerShouldMove = true; area.inClickLockout = true; }
         else { area.inClickLockout = false; area.computerShouldMove = false; }
         handleMove();
-        area.changeGame(game, player);
+        area.changeGame(game);
     }
 
     // Handler for when the settings button is pressed
@@ -273,9 +273,7 @@ class MyWindow : Gtk.Window {
     protected override bool OnDeleteEvent(Event ev) {
         Application.Quit();
         return true;
-    }
-
-    
+    } 
 }
 
 // The drawing area that draws UTTT board
@@ -283,7 +281,6 @@ class GameArea : DrawingArea {
     bool debug = false; // Set to true to enable console outputs for drawing area
 
     Game game;
-    IPlayer player;
     event NotifyMove moveMade;
 
     public int areaSize; //Stores the size of the width and length of the 'actual' area
@@ -305,8 +302,7 @@ class GameArea : DrawingArea {
     black = new Color( 0, 0, 0 ),
     white = new Color( 1, 1, 1 ),
     transparentHighlight = new Color( 253, 255, 0, 0.5 );
-    bool wrongClick; // Used to store information about when to display notifications about invalid clicks
-    public bool inClickLockout;
+    public bool inClickLockout; // Stores whether or not the application should actually treat user clicks
     public bool computerShouldMove; // If it's the computer's turn, this is set to true
 
     public GameArea( int size, int padding, Game game, IPlayer player, NotifyMove moveMadeEvent ) {
@@ -315,7 +311,6 @@ class GameArea : DrawingArea {
         areaSize = size;
 
         this.game = game;
-        this.player = player;
 
         using (Context c = new Context(canvas)) {
             c.SetSourceColor( white );
@@ -323,7 +318,6 @@ class GameArea : DrawingArea {
         }
 
         AddEvents( (int) ButtonPressMask ); // Listens for button press events
-        wrongClick = false;
         inClickLockout = false;
 
         topLeftGrid = new (int,int)[ 9, 9 ];
@@ -345,10 +339,9 @@ class GameArea : DrawingArea {
         QueueDraw();
     }
 
-    public void changeGame(Game game, IPlayer player) { // Handles changing the game state and type of player
+    public void changeGame(Game game) { // Handles changing the game state and type of player
     // Called when a new game is started
         this.game = game;
-        this.player = player;
         QueueDraw();
     }
 
@@ -356,7 +349,7 @@ class GameArea : DrawingArea {
     // I.e. putting topLeftX = 100 will mean it will be drawn 100 + horizontalOffset
 
     void drawTicTacToeBoard( Context c, int topLeftX, int topLeftY, int totalWidth, int paddingFromTopLeft, int stroke = 4, bool isSmallBoard = false, int smallBoardX = -1, int smallBoardY = -1 ) {
-    // Handles drawing a tic tac board, with seperate handling for the small and large boards and recalculating the topLeftGrid when needed
+    // Method for drawing a tic tac board, with seperate handling for the small and large boards and recalculating the topLeftGrid when needed
         if ( debug ) System.Console.WriteLine($"Drawing board from {topLeftX + horizontalOffset}, {topLeftY + verticalOffset} with width/height {totalWidth}, and padding {paddingFromTopLeft}");
         c.SetSourceColor( black );
         c.LineWidth = stroke;
@@ -411,15 +404,6 @@ class GameArea : DrawingArea {
         c.Stroke();
     }
 
-    void showWrongClickText( Context c ) { // Shows warning text about wrong click in the top middle of the drawing area
-        c.SetSourceColor( black );
-        string s = "Invalid selection";
-        TextExtents te = c.TextExtents( s ); 
-        c.MoveTo(areaSize / 2 - (te.Width / 2 + te.XBearing),
-               padding - 40 - (te.Height / 2 + te.YBearing));
-        c.ShowText(s);
-    }
-
     protected override bool OnDrawn( Context c ) { // Whenever QueueDraw() or Show() is called
         drawTicTacToeBoard( c, 0, 0, areaSize, padding ); // Draw big board
         int[] bigBoardDivisions = { padding, ( areaSize - padding * 2 ) / 3 + padding, ( areaSize - padding * 2 ) / 3 * 2 + padding };
@@ -433,12 +417,12 @@ class GameArea : DrawingArea {
         // Display all individual grid entries
         for ( int x = 0; x < 9; ++x ) {
             for ( int y = 0; y < 9; ++y ) {
-                int player = game.bigGrid[ x / 3, y / 3 ].grid[ x % 3, y % 3 ];
+                int currPlayer = game.bigGrid[ x / 3, y / 3 ].grid[ x % 3, y % 3 ];
                 int entrySize = ( int ) ( individualGridEntryWidth * ( (float) gridEntrySizePercentage / 100 ));
                 int entryPadding = ( individualGridEntryWidth - entrySize ) / 2;
-                if ( player == 1 ) {
+                if ( currPlayer == 1 ) {
                     drawCircle( c, topLeftGrid[ x, y ].x + innerGridPadding, topLeftGrid[ x, y ].y + innerGridPadding, entrySize, entryPadding, blue );
-                } else if ( player == 2 ) {
+                } else if ( currPlayer == 2 ) {
                     drawCross( c, topLeftGrid[ x, y ].x + innerGridPadding, topLeftGrid[ x, y ].y + innerGridPadding, entrySize, entryPadding, red );
                 }
             }
@@ -486,28 +470,21 @@ class GameArea : DrawingArea {
             c.Fill();
         }
 
-        // If wrongClick is true, display the warning text
-        if ( wrongClick ) {
-            showWrongClickText( c );
-        }
-
         return true;
     }
 
     // Called whenever the drawing area is pressed ( i.e. mouse click )
     protected override bool OnButtonPressEvent( EventButton e ) {
         if ( inClickLockout ) { return true; } // If we should be ignoring clicks, do nothing
-        wrongClick = false;
         // Work out the grid coordinates of where the click occured
         int smallBoardWidth = ( areaSize - padding * 2 ) / 9;
         int gridX = (int) Math.Floor( ( e.X - padding - horizontalOffset ) / smallBoardWidth );
         int gridY = (int) Math.Floor( ( e.Y - padding - verticalOffset) / smallBoardWidth );
         if ( debug ) System.Console.WriteLine($"Clicked on board with coords { gridX }, { gridY }");
         // Handle a valid an invalid grid position accordingly
-        if ( gridX > 8 || gridY > 8 || gridX < 0 || gridY < 0 ) wrongClick = true;
-        else {
+        if ( ( gridX < 8 && gridY < 8 ) || ( gridX > 0 && gridY > 0 ) ) {
             bool result = game.move( new Move( gridX, gridY ), true );
-            if ( !result ) wrongClick = true; else inClickLockout = true; computerShouldMove = true; if ( moveMade != null ) moveMade();
+            if ( result ) inClickLockout = true; computerShouldMove = true; if ( moveMade != null ) moveMade();
             // If a legal move was made by the player, call on all handlers of moveMade
         }
         QueueDraw();
@@ -519,7 +496,7 @@ class GameArea : DrawingArea {
 class Program {
     static void Main() {
         Application.Init();
-        MyWindow w = new MyWindow();
+        AppWindow w = new AppWindow();
         w.ShowAll();
         Application.Run();
     }

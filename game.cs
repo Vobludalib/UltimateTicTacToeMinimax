@@ -68,7 +68,7 @@ public class Game { // Class representing the game
         }
 
         bool checkDirection( int x, int y, int dx, int dy, out int winner ) { // Helper method for updateWinner, which returns true if that specific direction is 'won'
-            // the out parameter winner corresponds to 1 or 2 based on who won that direction
+            // The out parameter winner corresponds to 1 or 2 based on who won that direction
             winner = -1;
             int initPlayer = grid[ x, y ];
 
@@ -91,7 +91,7 @@ public class Game { // Class representing the game
     public int won; // Keeps track of the winner of the game
     Stack<Move> previousMoves; // Stack of previousMoves so that when making a move and then unmoving you keep track of previousMove
     // This is needed, as the next turn's allowed moves rely on the previous move
-    Stack<bool> previousPlayAnywhere; // Boolean that stores if the player was sent to an already won square 
+    Stack<bool> previousPlayAnywhere; // Stack of booleans that stores if the player was sent to an already won square given a previousMove
     bool playAnywhere; // Current state of if we were just sent to an already won square
 
     public Game() {
@@ -338,7 +338,7 @@ public class MinimaxPlayer : IPlayer { // The implentation of the minimax agent
                 int smallSum = 0;
                 for ( int smallX = 0; smallX < 3; ++smallX ) {
                     for ( int smallY = 0; smallY < 3; ++smallY ) {
-                        if ( gamestate.bigGrid[ x, y ].grid[ smallX, smallY ] >= 1 ) {
+                        if ( gamestate.bigGrid[ x, y].winner() is null && gamestate.bigGrid[ x, y ].grid[ smallX, smallY ] >= 1 ) {
                             smallSum += -10 * ( ( gamestate.bigGrid[ x, y ].grid[ smallX, smallY ] * 2 ) - 3 );
                         }
                     }
