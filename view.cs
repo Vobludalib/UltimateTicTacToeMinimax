@@ -122,7 +122,19 @@ class MyWindow : Gtk.Window {
 
     // Handler for when a move is made, that changes the turn labels
     void handleMove() {
-        if ( ( playerPlaysFirst && game.turn == 1 ) || ( !playerPlaysFirst && game.turn == 2 ) ) turnLabel.Text = "Your turn";
+        if ( game.winner() is not null ) {
+            int? winner = game.winner();
+            string text;
+            if ( winner == 0 ) {
+                text = "Tie!";
+            } else if ( ( playerPlaysFirst && winner == 1 ) || ( !playerPlaysFirst && winner == 2 ) ) {
+                text = "You win!";
+            } else {
+                text = "Computer wins!";
+            }
+            turnLabel.Text = text;
+        } 
+        else if ( ( playerPlaysFirst && game.turn == 1 ) || ( !playerPlaysFirst && game.turn == 2 ) ) turnLabel.Text = "Your turn";
         else turnLabel.Text = "Computer's turn";
     }
 
@@ -461,11 +473,7 @@ class GameArea : DrawingArea {
             } else {
                 s = "Tie!";
             }
-            c.SetSourceColor( black );
-            TextExtents te = c.TextExtents( s ); 
-            c.MoveTo(areaSize / 2 - (te.Width / 2 + te.XBearing),
-                padding - 40 - (te.Height / 2 + te.YBearing));
-            c.ShowText(s);
+            moveMade();
             return true;
         }
 
@@ -478,7 +486,7 @@ class GameArea : DrawingArea {
             c.Fill();
         }
 
-        // If wrongClikc is true, display the warning text
+        // If wrongClick is true, display the warning text
         if ( wrongClick ) {
             showWrongClickText( c );
         }
