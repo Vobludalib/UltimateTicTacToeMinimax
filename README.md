@@ -62,3 +62,7 @@ Check that somewhere in the background the settings popup is not active. The set
 
 ### Dev Documentation
 See [devdocs.md](./devdocs.md)
+
+### Testing Documentation
+
+See [manualTests.md](./manualTests.md)
