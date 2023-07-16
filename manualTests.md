@@ -70,9 +70,15 @@ Verified: Simon Libricky
 `64bit WindowsPE AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`<br>
 `2023-07-16 19:59:11.612195`
 
-### Win checking / lockout
+### Win checking / lockout :heavy_check_mark:
 
 When the game is won or tied, the player is locked out of making moves, the computer does not make a move, and the winner is correctly displayed
+
+Verified: Simon Libricky
+
+`Windows 10 10.0.19045`<br>
+`64bit WindowsPE AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`<br>
+`2023-07-16 21:01:00.227600`
 
 ### Resizing window :heave_check_mark:
 
