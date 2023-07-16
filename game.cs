@@ -216,13 +216,13 @@ public class Game { // Class representing the game
 
         // Check rows and columns
         for ( int i = 0 ; i < 3 ; ++i )
-            if ( !winnerFound && ( checkDirection( i, 0, 0, 1, out winner ) || checkDirection( 0, i, 1, 0, out winner ) ) ) {
+            if ( ( checkDirection( i, 0, 0, 1, out winner ) || checkDirection( 0, i, 1, 0, out winner ) ) ) {
                 if ( winner != 0 ) won = winner;
                 winnerFound = true;
             }
                 
         // Check diagonals
-        if ( !winnerFound && ( checkDirection( 0, 0, 1, 1, out winner ) || checkDirection( 2, 0, -1, 1, out winner ) ) ) {
+        if ( ( checkDirection( 0, 0, 1, 1, out winner ) || checkDirection( 2, 0, -1, 1, out winner ) ) ) {
             if ( winner != 0 ) won = winner;
             winnerFound = true;
         }
