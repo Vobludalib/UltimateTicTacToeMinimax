@@ -20,7 +20,7 @@ Verified: Simon Libricky
 `64bit WindowsPE AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`<br>
 `2023-07-16 19:47:57.720424`
 
-### Changing the settings persists :heave_check_mark:
+### Changing the settings persists :heavy_check_mark:
 
 When the settings are changed and Confirm is pressed, these settings remain when the setting are re-opened. These changes do not persist when the X or Cancel is pressed.
 
@@ -80,7 +80,7 @@ Verified: Simon Libricky
 `64bit WindowsPE AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`<br>
 `2023-07-16 21:01:00.227600`
 
-### Resizing window :heave_check_mark:
+### Resizing window :heavy_check_mark:
 
 When the window is resized, but not fullscreened, the app scales correctly
 
