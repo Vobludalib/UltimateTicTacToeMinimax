@@ -482,7 +482,7 @@ class GameArea : DrawingArea {
         int gridY = (int) Math.Floor( ( e.Y - padding - verticalOffset) / smallBoardWidth );
         if ( debug ) System.Console.WriteLine($"Clicked on board with coords { gridX }, { gridY }");
         // Handle a valid an invalid grid position accordingly
-        if ( ( gridX < 8 && gridY < 8 ) || ( gridX > 0 && gridY > 0 ) ) {
+        if ( ( gridX <= 8 || gridY <= 8 ) || ( gridX >= 0 || gridY >= 0 ) ) {
             bool result = game.move( new Move( gridX, gridY ), true );
             if ( result ) inClickLockout = true; computerShouldMove = true; if ( moveMade != null ) moveMade();
             // If a legal move was made by the player, call on all handlers of moveMade
