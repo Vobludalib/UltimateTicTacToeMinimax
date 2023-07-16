@@ -30,7 +30,7 @@ Verified: Simon Libricky
 `64bit WindowsPE AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`<br>
 `2023-07-16 19:50:10.152072`
 
-### Changing the who plays first setting only works on New Game :heave_check_mark:
+### Changing the who plays first setting only works on New Game :heavy_check_mark:
 
 When the setting for who plays first is confirmed, that change only occurs when a new game is started
 
