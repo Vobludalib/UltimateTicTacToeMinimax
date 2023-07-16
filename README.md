@@ -58,8 +58,5 @@ I have not added supported for fullscreening the application ( see the Dev Docum
 ### UNRESPONSIVE WINDOW?
 Check that somewhere in the background the settings popup is not active. The settings popup takes control of the app and doesn't allow interaction with the main window when it is active.
 
-### Pre-built installation
-INSERT HERE WHEN DONE
-
 ### Dev Documentation
 See [devdocs.md](./devdocs.md)
