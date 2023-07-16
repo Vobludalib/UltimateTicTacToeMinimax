@@ -11,6 +11,8 @@ To run this project, you can download a pre-built release of this project for yo
 | Mac OS X x64 | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/osx-x64.zip) |
 | Mac OS X Arm | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/osx-arm64.zip) |
 
+**NOTE: I have not figured out single-file releases for Linux and Mac OS, as they do not directly run .exe files or the like. On Windows, simply run the .exe file in the downloaded archive**
+
  or build the project yourself by downloading the source code, unzipping the .zip file with the source code and navigating into the directory.
 
 **Source code:** [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/)
