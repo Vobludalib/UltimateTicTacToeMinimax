@@ -3,7 +3,20 @@
 ##### Šimon Libřický
 
 # User documentation:
-To run this project, either run an executable directly ( UPDATE WHEN BUILT ) or build the project yourself by navigating into the cloned repository directory and run the following command:
+To run this project, you can download a pre-built release of this project for your given OS and platform:
+| Platform | Link |
+| --- | --- |
+| Windows x64 | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/win-x64.zip) |
+| Linux x64 | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/linux-x64.zip) |
+| Mac OS X x64 | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/osx-x64.zip) |
+| Mac OS X Arm | [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/download/osx-arm64.zip) |
+
+ or build the project yourself by downloading the source code, unzipping the .zip file with the source code and navigating into the directory.
+
+**Source code:** [Here](https://github.com/Vobludalib/UltimateTicTacToeMinimax/releases/latest/)
+
+When that is done, you can run the application using this command in the terminal.
+**NOTE: YOU NEED A .NET 7.0.x RUNTIME TO RUN THIS COMMAND**
 
 `dotnet run`
 
